@@ -1,28 +1,46 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,Image } from 'react-native';
 import { auth } from './firebase';
+import { getDatabase, ref, get } from 'firebase/database'; // Database fonksiyonları
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email || !password) {
       Alert.alert('Hata', 'Kullanıcı adı ve şifre boş olamaz!');
       return;
     }
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
-      Alert.alert('Başarılı', 'Giriş yapıldı!');
-      auth.signInWithEmailAndPassword(email,password)
-      .then((userCredentials)=>{
-        const user = userCredentials.user;
-        console.log("kullanici giris yapti : ", user.email);
 
-      }).catch((error) => alert(error.message));
-    }, 2000);
+    try {
+      const userCredential = await auth.signInWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Firebase Database'den kullanıcı bilgisi çekme
+      const db = getDatabase();
+      const userRef = ref(db, `users/${user.uid}`);
+      const snapshot = await get(userRef);
+
+      if (snapshot.exists()) {
+        const userData = snapshot.val();
+        if (userData.yetki_id === 1) {
+          navigation.navigate('Doctor'); // Doktor sayfasına yönlendirme
+        } else if (userData.yetki_id === 0) {
+          navigation.navigate('Patient'); // Hasta sayfasına yönlendirme
+        } else {
+          Alert.alert('Hata', 'Geçersiz yetki!');
+        }
+      } else {
+        Alert.alert('Hata', 'Kullanıcı bilgileri bulunamadı!');
+      }
+    } catch (error) {
+      Alert.alert('Hata', error.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -35,6 +53,7 @@ const LoginScreen = ({ navigation }) => {
         placeholderTextColor="#999"
         value={email}
         onChangeText={setEmail}
+        keyboardType="email-address"
       />
       <TextInput
         style={styles.input}
@@ -59,7 +78,6 @@ const LoginScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // Stil kodları
   container: {
     flex: 1,
     justifyContent: 'center',
@@ -74,9 +92,9 @@ const styles = StyleSheet.create({
     color: '#333',
   },
   logo: {
-    width: 150, // Genişlik ve yükseklik eşit olmalı
+    width: 150,
     height: 150,
-    borderRadius: 75, // Yüksekliğin yarısı kadar
+    borderRadius: 75,
     marginBottom: 20,
   },
   input: {

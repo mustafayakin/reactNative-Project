@@ -1,23 +1,38 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { auth } from './firebase';
+import { getDatabase, ref, set } from 'firebase/database'; // Database fonksiyonları
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [name, setName] = useState('');
-  const [surname, setSurname] = useState('');
 
-  const handleRegister = () => {
-    if (!email || !password || !name || !surname) {
-      Alert.alert('Hata', 'Email ve şifre boş olamaz!');
+  const handleRegister = async () => {
+    if (!email || !password || !name) {
+      Alert.alert('Hata', 'İsim, email ve şifre boş olamaz!');
       return;
     }
-    auth.createUserWithEmailAndPassword(email,password).then(userCredentials => {
-      const user = userCredentials.user;
-      console.log('kullanici :', user.email)
-    }).catch(error => alert(error.message));
-    navigation.goBack(); // Kayıt sonrası giriş ekranına dön
+
+    try {
+      // Firebase Authentication ile kullanıcı kaydı
+      const userCredential = await auth.createUserWithEmailAndPassword(email, password);
+      const user = userCredential.user;
+
+      // Firebase Realtime Database'e kullanıcı bilgilerini ekleme
+      const db = getDatabase(); // Veritabanı bağlantısını alın
+      await set(ref(db, `users/${user.uid}`), {
+        name,
+        email,
+        yetki_id: 0, // Varsayılan olarak hasta
+        created_at: new Date().toISOString(),
+      });
+
+      Alert.alert('Başarılı', 'Kayıt başarıyla tamamlandı!');
+      navigation.navigate('Login'); // Giriş ekranına yönlendirme
+    } catch (error) {
+      Alert.alert('Hata', error.message);
+    }
   };
 
   return (
@@ -25,24 +40,18 @@ const RegisterScreen = ({ navigation }) => {
       <Text style={styles.title}>Kayıt Ol</Text>
       <TextInput
         style={styles.input}
-        placeholder="İsim"
+        placeholder="İsim Soyisim"
         placeholderTextColor="#999"
         value={name}
-        onChangeText={text => setName(text)}
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Soyisim"
-        placeholderTextColor="#999"
-        value={surname}
-        onChangeText={text => setSurname(text)}
+        onChangeText={setName}
       />
       <TextInput
         style={styles.input}
         placeholder="E-mail"
         placeholderTextColor="#999"
+        keyboardType="email-address"
         value={email}
-        onChangeText={text => setEmail(text)}
+        onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}
@@ -50,7 +59,7 @@ const RegisterScreen = ({ navigation }) => {
         placeholderTextColor="#999"
         secureTextEntry
         value={password}
-        onChangeText={text => setPassword(text)}
+        onChangeText={setPassword}
       />
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Kayıt Ol</Text>
