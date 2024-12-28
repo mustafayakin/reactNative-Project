@@ -1,13 +1,14 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,Image } from 'react-native';
+import { auth } from './firebase';
 
 const LoginScreen = ({ navigation }) => {
-  const [username, setUsername] = useState('');
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleLogin = () => {
-    if (!username || !password) {
+    if (!email || !password) {
       Alert.alert('Hata', 'Kullanıcı adı ve şifre boş olamaz!');
       return;
     }
@@ -15,6 +16,12 @@ const LoginScreen = ({ navigation }) => {
     setTimeout(() => {
       setLoading(false);
       Alert.alert('Başarılı', 'Giriş yapıldı!');
+      auth.signInWithEmailAndPassword(email,password)
+      .then((userCredentials)=>{
+        const user = userCredentials.user;
+        console.log("kullanici giris yapti : ", user.email);
+
+      }).catch((error) => alert(error.message));
     }, 2000);
   };
 
@@ -24,10 +31,10 @@ const LoginScreen = ({ navigation }) => {
       <Text style={styles.title}>eTahlil'e Hoşgeldiniz!</Text>
       <TextInput
         style={styles.input}
-        placeholder="Kullanıcı Adı"
+        placeholder="e-Mail"
         placeholderTextColor="#999"
-        value={username}
-        onChangeText={setUsername}
+        value={email}
+        onChangeText={setEmail}
       />
       <TextInput
         style={styles.input}

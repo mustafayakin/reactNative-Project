@@ -1,16 +1,22 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { auth } from './firebase';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [name, setName] = useState('');
+  const [surname, setSurname] = useState('');
 
   const handleRegister = () => {
-    if (!email || !password) {
+    if (!email || !password || !name || !surname) {
       Alert.alert('Hata', 'Email ve şifre boş olamaz!');
       return;
     }
-    Alert.alert('Başarılı', 'Kayıt başarıyla tamamlandı!');
+    auth.createUserWithEmailAndPassword(email,password).then(userCredentials => {
+      const user = userCredentials.user;
+      console.log('kullanici :', user.email)
+    }).catch(error => alert(error.message));
     navigation.goBack(); // Kayıt sonrası giriş ekranına dön
   };
 
@@ -19,10 +25,24 @@ const RegisterScreen = ({ navigation }) => {
       <Text style={styles.title}>Kayıt Ol</Text>
       <TextInput
         style={styles.input}
-        placeholder="Email"
+        placeholder="İsim"
+        placeholderTextColor="#999"
+        value={name}
+        onChangeText={text => setName(text)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="Soyisim"
+        placeholderTextColor="#999"
+        value={surname}
+        onChangeText={text => setSurname(text)}
+      />
+      <TextInput
+        style={styles.input}
+        placeholder="E-mail"
         placeholderTextColor="#999"
         value={email}
-        onChangeText={setEmail}
+        onChangeText={text => setEmail(text)}
       />
       <TextInput
         style={styles.input}
@@ -30,7 +50,7 @@ const RegisterScreen = ({ navigation }) => {
         placeholderTextColor="#999"
         secureTextEntry
         value={password}
-        onChangeText={setPassword}
+        onChangeText={text => setPassword(text)}
       />
       <TouchableOpacity style={styles.button} onPress={handleRegister}>
         <Text style={styles.buttonText}>Kayıt Ol</Text>
