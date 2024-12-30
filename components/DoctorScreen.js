@@ -49,7 +49,7 @@ const DoctorScreen = ({ navigation }) => {
   };
 
   return (
-    <SafeAreaView style={[styles.container, { paddingTop: 0 }]}>
+    <SafeAreaView style={{ flex: 1, backgroundColor: '#FFF9F3' }} edges={['top', 'left', 'right']}>
       {/* Üst Bar */}
       <LinearGradient
         colors={['#f4511e', '#f4511e']} // Alt çubukla aynı renk

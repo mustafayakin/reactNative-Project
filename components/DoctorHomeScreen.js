@@ -1,5 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, Dimensions } from 'react-native';
+import {
+  View,
+  Text,
+  FlatList,
+  StyleSheet,
+  TouchableOpacity,
+  Dimensions,
+} from 'react-native';
 import { getDatabase, ref, get } from 'firebase/database';
 import { FontAwesome } from '@expo/vector-icons';
 
@@ -17,46 +24,94 @@ const DoctorHomeScreen = ({ navigation }) => {
     }
     let age = today.getFullYear() - birth.getFullYear();
     const monthDifference = today.getMonth() - birth.getMonth();
-    if (monthDifference < 0 || (monthDifference === 0 && today.getDate() < birth.getDate())) {
+    if (
+      monthDifference < 0 ||
+      (monthDifference === 0 && today.getDate() < birth.getDate())
+    ) {
       age--;
     }
     return age;
   };
 
   useEffect(() => {
-    const fetchPatients = async () => {
+    const fetchData = async () => {
       try {
         const db = getDatabase();
+        // 1) Tüm kullanıcıları çek
         const usersRef = ref(db, 'users');
-        const snapshot = await get(usersRef);
+        const usersSnapshot = await get(usersRef);
 
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          const filteredPatients = Object.values(data).filter(
-            (user) => user.yetki_id === 0 && user.birthDate
-          );
+        // 2) Tüm testleri çek (her hastanın kaç testi olduğunu bulmak için)
+        const testsRef = ref(db, 'tests');
+        const testsSnapshot = await get(testsRef);
 
-          const patientsWithAge = filteredPatients.map((patient) => ({
+        if (usersSnapshot.exists()) {
+          const usersData = usersSnapshot.val();
+          // Filtre: yetki_id === 0 olanlar hasta ve birthDate'i tanımlı
+          const filteredPatients = Object.keys(usersData)
+            .map((key) => ({
+              id: key,
+              ...usersData[key],
+            }))
+            .filter((user) => user.yetki_id === 0 && user.birthDate);
+
+          // Test sayısını hesapla
+          let testCounts = {};
+          if (testsSnapshot.exists()) {
+            const testsData = testsSnapshot.val();
+            Object.keys(testsData).forEach((testKey) => {
+              const test = testsData[testKey];
+              const userId = test.user_id;
+              if (userId) {
+                testCounts[userId] = testCounts[userId]
+                  ? testCounts[userId] + 1
+                  : 1;
+              }
+            });
+          }
+
+          // Hasta nesnelerine yaş ve test sayısını ekle
+          const patientsWithAgeAndTests = filteredPatients.map((patient) => ({
+            id: patient.id,
             name: patient.name,
             age: calculateAge(patient.birthDate),
+            testCount: testCounts[patient.id] || 0, // Testi yoksa 0
           }));
 
-          setPatients(patientsWithAge);
+          setPatients(patientsWithAgeAndTests);
         }
       } catch (error) {
         console.error('Hata:', error.message);
       }
     };
 
-    fetchPatients();
+    fetchData();
   }, []);
 
   // Liste öğesi render fonksiyonu
   const renderPatient = ({ item }) => (
-    <View style={styles.listItem}>
-      <Text style={styles.patientName}>{item.name}</Text>
-      <Text style={styles.patientAge}>{item.age} yaşında</Text>
-    </View>
+    <TouchableOpacity
+      style={styles.card}
+      onPress={() => {
+        // İleride profil detayına, tahlillerine vs. yönlendirmek istersen
+        // navigation.navigate('UserProfileScreen', { userId: item.id });
+      }}
+      activeOpacity={0.9}
+    >
+      {/* Kart içeriği */}
+      <View style={styles.cardContent}>
+        <Text style={styles.patientName}>{item.name}</Text>
+        <View style={styles.subtitleRow}>
+          <Text style={styles.patientAge}>{item.age} yaşında</Text>
+          <View style={styles.testCountContainer}>
+            <FontAwesome name="flask" size={16} color="#f4511e" />
+            <Text style={styles.testCountText}>
+              {` ${item.testCount} tahlil`}
+            </Text>
+          </View>
+        </View>
+      </View>
+    </TouchableOpacity>
   );
 
   return (
@@ -64,57 +119,76 @@ const DoctorHomeScreen = ({ navigation }) => {
       <Text style={styles.title}>Hastalar</Text>
       <FlatList
         data={patients}
-        keyExtractor={(item, index) => index.toString()}
+        keyExtractor={(item) => item.id}
         renderItem={renderPatient}
-        ListEmptyComponent={<Text style={styles.emptyText}>Kayıtlı hasta bulunamadı.</Text>}
+        ListEmptyComponent={
+          <Text style={styles.emptyText}>Kayıtlı hasta bulunamadı.</Text>
+        }
       />
-      
-      {/* + Tuşu */}
+
+      {/* (+) Butonu */}
       <TouchableOpacity
         style={styles.floatingButton}
-        onPress={() => navigation.navigate('PrescriptionEntry')} // PrescriptionEntry ekranına yönlendirir
+        onPress={() => navigation.navigate('PrescriptionEntry')}
+        activeOpacity={0.7}
       >
-        <FontAwesome name="plus" size={30} color="white" />
+        <FontAwesome name="plus" size={30} color="#fff" />
       </TouchableOpacity>
     </View>
   );
 };
 
+export default DoctorHomeScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#FFF9F3', // Turuncumsu açık bir zemin
+    paddingHorizontal: 10,
+    paddingTop: 20,
   },
   title: {
     textAlign: 'center',
     fontSize: 24,
-    fontWeight: 'bold',
+    fontWeight: '700',
     color: '#f4511e',
     marginBottom: 15,
   },
-  listItem: {
+  card: {
+    backgroundColor: '#ffffff',
+    borderRadius: 12,
+    marginBottom: 12,
+    elevation: 2,
+    // Turuncu şerit efekti
+    borderLeftWidth: 5,
+    borderLeftColor: '#f4511e',
+  },
+  cardContent: {
+    padding: 15,
+  },
+  patientName: {
+    fontSize: 20,
+    fontWeight: 'bold',
+    color: '#333',
+    marginBottom: 6,
+  },
+  subtitleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 15,
-    backgroundColor: '#fff',
-    marginBottom: 10,
-    borderRadius: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  patientName: {
-    fontSize: 18,
-    fontWeight: 'bold',
-    color: '#333',
   },
   patientAge: {
     fontSize: 16,
     color: '#666',
+  },
+  testCountContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  testCountText: {
+    fontSize: 15,
+    color: '#f4511e',
+    marginLeft: 4,
   },
   emptyText: {
     textAlign: 'center',
@@ -135,5 +209,3 @@ const styles = StyleSheet.create({
     elevation: 5,
   },
 });
-
-export default DoctorHomeScreen;

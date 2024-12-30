@@ -1,8 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
-import { auth } from './firebase';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  Alert,
+  ActivityIndicator,
+} from 'react-native';
 import { getDatabase, ref, set } from 'firebase/database';
 import DateTimePicker from '@react-native-community/datetimepicker';
+import { auth } from './firebase';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -10,7 +18,7 @@ const RegisterScreen = ({ navigation }) => {
   const [name, setName] = useState('');
   const [birthDate, setBirthDate] = useState(new Date());
   const [showDatePicker, setShowDatePicker] = useState(false);
-  const [loading, setLoading] = useState(false); // Loading durumu
+  const [loading, setLoading] = useState(false);
 
   const handleRegister = async () => {
     if (!email || !password || !name || !birthDate) {
@@ -18,13 +26,13 @@ const RegisterScreen = ({ navigation }) => {
       return;
     }
 
-    setLoading(true); // Loading başlat
+    setLoading(true);
     try {
       // Firebase Authentication ile kullanıcı kaydı
       const userCredential = await auth.createUserWithEmailAndPassword(email, password);
       const user = userCredential.user;
 
-      // Firebase Realtime Database'e kullanıcı bilgilerini ekleme
+      // Firebase Realtime Database'e kullanıcı bilgilerini ekle
       const db = getDatabase();
       await set(ref(db, `users/${user.uid}`), {
         name,
@@ -39,13 +47,15 @@ const RegisterScreen = ({ navigation }) => {
     } catch (error) {
       Alert.alert('Hata', error.message);
     } finally {
-      setLoading(false); // Loading durdur
+      setLoading(false);
     }
   };
 
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Kayıt Ol</Text>
+
+      {/* İsim Soyisim */}
       <TextInput
         style={styles.input}
         placeholder="İsim Soyisim"
@@ -53,6 +63,8 @@ const RegisterScreen = ({ navigation }) => {
         value={name}
         onChangeText={setName}
       />
+
+      {/* E-mail */}
       <TextInput
         style={styles.input}
         placeholder="E-mail"
@@ -60,7 +72,10 @@ const RegisterScreen = ({ navigation }) => {
         keyboardType="email-address"
         value={email}
         onChangeText={setEmail}
+        autoCapitalize="none"
       />
+
+      {/* Şifre */}
       <TextInput
         style={styles.input}
         placeholder="Şifre"
@@ -69,6 +84,7 @@ const RegisterScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
       />
+
       {/* Doğum Tarihi Seçici */}
       <TouchableOpacity
         style={styles.datePickerButton}
@@ -91,8 +107,10 @@ const RegisterScreen = ({ navigation }) => {
           }}
         />
       )}
+
+      {/* Kayıt Butonu veya Yükleniyor */}
       {loading ? (
-        <ActivityIndicator size="large" color="#6200ee" /> // Loading göstergesi
+        <ActivityIndicator size="large" color="#f4511e" style={{ marginTop: 10 }} />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleRegister}>
           <Text style={styles.buttonText}>Kayıt Ol</Text>
@@ -102,55 +120,63 @@ const RegisterScreen = ({ navigation }) => {
   );
 };
 
+export default RegisterScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#FFF9F3', // Turuncumsu açık arka plan
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
     padding: 20,
   },
   title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#f4511e',  // Turuncu vurgu
+    marginBottom: 30,
+    textAlign: 'center',
   },
   input: {
     width: '100%',
     height: 50,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#ddd',
+    fontSize: 16,
+    color: '#333',
   },
   datePickerButton: {
     width: '100%',
     height: 50,
+    borderRadius: 10,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
     justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#ddd',
-    borderRadius: 8,
     marginBottom: 15,
+    paddingHorizontal: 15,
   },
   datePickerText: {
+    fontSize: 16,
     color: '#333',
   },
   button: {
     width: '100%',
     height: 50,
-    backgroundColor: '#6200ee',
-    borderRadius: 8,
+    backgroundColor: '#f4511e', // Turuncu buton
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2, // Hafif gölge
+    marginTop: 5,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
 });
-
-export default RegisterScreen;

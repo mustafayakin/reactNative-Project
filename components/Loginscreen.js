@@ -1,7 +1,16 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator, Alert,Image } from 'react-native';
+import {
+  View,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  StyleSheet,
+  ActivityIndicator,
+  Alert,
+  Image,
+} from 'react-native';
 import { auth } from './firebase';
-import { getDatabase, ref, get } from 'firebase/database'; // Database fonksiyonları
+import { getDatabase, ref, get } from 'firebase/database';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -45,8 +54,13 @@ const LoginScreen = ({ navigation }) => {
 
   return (
     <View style={styles.container}>
+      {/* Logo veya Uygulama Görseli */}
       <Image source={require('../assets/logo.png')} style={styles.logo} />
+
+      {/* Hoşgeldiniz Yazısı */}
       <Text style={styles.title}>eTahlil'e Hoşgeldiniz!</Text>
+
+      {/* E-posta Girişi */}
       <TextInput
         style={styles.input}
         placeholder="e-Mail"
@@ -54,7 +68,10 @@ const LoginScreen = ({ navigation }) => {
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
+        autoCapitalize="none"
       />
+
+      {/* Şifre Girişi */}
       <TextInput
         style={styles.input}
         placeholder="Şifre"
@@ -63,70 +80,84 @@ const LoginScreen = ({ navigation }) => {
         value={password}
         onChangeText={setPassword}
       />
+
+      {/* Yükleniyor Göstergesi veya Giriş Butonu */}
       {loading ? (
-        <ActivityIndicator size="large" color="#6200ee" />
+        <ActivityIndicator size="large" color="#f4511e" style={{ marginTop: 10 }} />
       ) : (
         <TouchableOpacity style={styles.button} onPress={handleLogin}>
           <Text style={styles.buttonText}>Giriş Yap</Text>
         </TouchableOpacity>
       )}
-      <TouchableOpacity style={styles.registerButton} onPress={() => navigation.navigate('Register')}>
+
+      {/* Kayıt Ol Butonu */}
+      <TouchableOpacity
+        style={styles.registerButton}
+        onPress={() => navigation.navigate('Register')}
+      >
         <Text style={styles.registerText}>Hesabınız yok mu? Kayıt Olun</Text>
       </TouchableOpacity>
     </View>
   );
 };
 
+export default LoginScreen;
+
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
+    backgroundColor: '#FFF9F3', // Turuncumsu açık arka plan
     alignItems: 'center',
-    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
     padding: 20,
   },
-  title: {
-    fontSize: 28,
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#333',
-  },
   logo: {
-    width: 150,
-    height: 150,
-    borderRadius: 75,
+    width: 120,
+    height: 120,
     marginBottom: 20,
+    borderRadius: 60,
+    borderWidth: 2,
+    borderColor: '#f4511e', // Turuncu çerçeve
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: '700',
+    color: '#f4511e',
+    marginBottom: 30,
   },
   input: {
     width: '100%',
     height: 50,
     backgroundColor: '#fff',
-    borderRadius: 8,
+    borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#ddd',
+    fontSize: 16,
+    color: '#333',
   },
   button: {
     width: '100%',
     height: 50,
-    backgroundColor: '#6200ee',
-    borderRadius: 8,
+    backgroundColor: '#f4511e', // Turuncu buton
+    borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
+    elevation: 2, // Hafif gölge
+    marginTop: 5,
   },
   buttonText: {
     color: '#fff',
-    fontSize: 16,
+    fontSize: 18,
     fontWeight: 'bold',
   },
   registerButton: {
     marginTop: 15,
   },
   registerText: {
-    color: '#6200ee',
-    fontSize: 14,
+    color: '#f4511e',
+    fontSize: 16,
+    fontWeight: '500',
   },
 });
-
-export default LoginScreen;

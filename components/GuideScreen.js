@@ -11,6 +11,7 @@ import { FontAwesome } from '@expo/vector-icons';
 import GUIDE_RANGES from './guideRanges'; // Kılavuz verileri
 
 const determineAgeGroup = (ageDetails, guide) => {
+  // ... (Yaş aralığı hesaplama fonksiyonu, değiştirilmeden kalabilir)
   const { years, months, days } = ageDetails;
   const guideAgeRanges = Object.keys(GUIDE_RANGES[guide]?.ageRanges || {});
 
@@ -105,84 +106,114 @@ const GuideScreen = () => {
   const handleGuideChange = (guide) => {
     setSelectedGuide(guide);
     setInputValues({}); // Kılavuz değiştiğinde giriş alanlarını sıfırla
-    setResults([]); // Kılavuz değiştiğinde sonuçları sıfırla
+    setResults([]);     // Kılavuz değiştiğinde sonuçları sıfırla
   };
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
-      <Text style={styles.title}>Yaş Bilgileri</Text>
+      <Text style={styles.title}>Kılavuz Hesaplama</Text>
 
-      <View style={styles.manualAgeGroup}>
-        <TextInput
-          style={styles.ageInput}
-          placeholder="Yıl"
-          keyboardType="numeric"
-          value={manualAge.years}
-          onChangeText={(value) => setManualAge((prev) => ({ ...prev, years: value }))}
-        />
-        <TextInput
-          style={styles.ageInput}
-          placeholder="Ay"
-          keyboardType="numeric"
-          value={manualAge.months}
-          onChangeText={(value) => setManualAge((prev) => ({ ...prev, months: value }))}
-        />
-        <TextInput
-          style={styles.ageInput}
-          placeholder="Gün"
-          keyboardType="numeric"
-          value={manualAge.days}
-          onChangeText={(value) => setManualAge((prev) => ({ ...prev, days: value }))}
-        />
+      {/* Yaş Bilgileri */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Yaş Bilgileri</Text>
+        <View style={styles.ageInputRow}>
+          <TextInput
+            style={styles.ageInput}
+            placeholder="Yıl"
+            keyboardType="numeric"
+            value={manualAge.years}
+            onChangeText={(value) => setManualAge((prev) => ({ ...prev, years: value }))}
+          />
+          <TextInput
+            style={styles.ageInput}
+            placeholder="Ay"
+            keyboardType="numeric"
+            value={manualAge.months}
+            onChangeText={(value) => setManualAge((prev) => ({ ...prev, months: value }))}
+          />
+          <TextInput
+            style={styles.ageInput}
+            placeholder="Gün"
+            keyboardType="numeric"
+            value={manualAge.days}
+            onChangeText={(value) => setManualAge((prev) => ({ ...prev, days: value }))}
+          />
+        </View>
       </View>
 
-      <View style={styles.buttonGroup}>
-        {Object.keys(GUIDE_RANGES).map((guide) => (
-          <TouchableOpacity
-            key={guide}
-            style={selectedGuide === guide ? styles.selectedButton : styles.button}
-            onPress={() => handleGuideChange(guide)}
-          >
-            <Text style={styles.buttonText}>{GUIDE_RANGES[guide].name}</Text>
-          </TouchableOpacity>
-        ))}
-      </View>
-
-      {selectedGuide && Object.keys(GUIDE_RANGES[selectedGuide]?.referenceKeys || {}).length > 0 && (
-        <View>
-          {Object.keys(GUIDE_RANGES[selectedGuide]?.referenceKeys || {}).map((key) => (
-            <View key={key} style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>{key}</Text>
-              <TextInput
-                style={styles.input}
-                placeholder={`Değer (${GUIDE_RANGES[selectedGuide].referenceKeys[key]})`}
-                keyboardType="numeric"
-                value={inputValues[key] || ''}
-                onChangeText={(value) =>
-                  setInputValues((prev) => ({ ...prev, [key]: value }))
-                }
-              />
-            </View>
+      {/* Kılavuz Seçimi */}
+      <View style={styles.sectionContainer}>
+        <Text style={styles.sectionTitle}>Kılavuz Seç</Text>
+        <View style={styles.guideButtonRow}>
+          {Object.keys(GUIDE_RANGES).map((guide) => (
+            <TouchableOpacity
+              key={guide}
+              style={[
+                styles.guideButton,
+                selectedGuide === guide && styles.guideButtonSelected,
+              ]}
+              onPress={() => handleGuideChange(guide)}
+            >
+              <Text
+                style={[
+                  styles.guideButtonText,
+                  selectedGuide === guide && styles.guideButtonTextSelected,
+                ]}
+              >
+                {GUIDE_RANGES[guide].name}
+              </Text>
+            </TouchableOpacity>
           ))}
         </View>
-      )}
+      </View>
 
+      {/* Değer Girişleri */}
+      {selectedGuide &&
+        Object.keys(GUIDE_RANGES[selectedGuide]?.referenceKeys || {}).length > 0 && (
+          <View style={styles.sectionContainer}>
+            <Text style={styles.sectionTitle}>Değerler</Text>
+            {Object.keys(GUIDE_RANGES[selectedGuide].referenceKeys).map((key) => (
+              <View key={key} style={styles.inputGroup}>
+                <Text style={styles.inputLabel}>{key}</Text>
+                <TextInput
+                  style={styles.valueInput}
+                  placeholder={`Değer (${GUIDE_RANGES[selectedGuide].referenceKeys[key]})`}
+                  keyboardType="numeric"
+                  value={inputValues[key] || ''}
+                  onChangeText={(value) =>
+                    setInputValues((prev) => ({ ...prev, [key]: value }))
+                  }
+                />
+              </View>
+            ))}
+          </View>
+        )}
+
+      {/* Hesapla Butonu */}
       <TouchableOpacity style={styles.calculateButton} onPress={handleCalculate}>
         <Text style={styles.calculateButtonText}>Hesapla</Text>
       </TouchableOpacity>
 
+      {/* Sonuçlar */}
       {results.length > 0 && (
-        <View>
-          <Text style={styles.resultsTitle}>Sonuçlar:</Text>
+        <View style={styles.resultsContainer}>
+          <Text style={styles.resultsTitle}>Sonuçlar</Text>
           {results.map((result) => (
             <View key={result.key} style={styles.resultItem}>
-              <FontAwesome
-                name={result.icon}
-                size={24}
-                color={result.color}
-                style={styles.resultIcon}
-              />
-              <Text style={styles.resultText}>{`${result.key}: ${result.status}`}</Text>
+              <View style={styles.resultItemLeft}>
+                <FontAwesome
+                  name={result.icon}
+                  size={22}
+                  color={result.color}
+                  style={{ marginRight: 8 }}
+                />
+                <Text style={styles.resultText}>
+                  {result.key}
+                </Text>
+              </View>
+              <Text style={[styles.resultStatus, { color: result.color }]}>
+                {result.status}
+              </Text>
             </View>
           ))}
         </View>
@@ -191,74 +222,103 @@ const GuideScreen = () => {
   );
 };
 
+export default GuideScreen;
+
 const styles = StyleSheet.create({
+  // Ana kapsayıcı
   container: {
+    flexGrow: 1,
+    backgroundColor: '#FFF9F3', // Açık turuncu arka plan
     padding: 20,
-    backgroundColor: '#f5f5f5',
   },
+  // Başlık
   title: {
     fontSize: 24,
     textAlign: 'center',
-    fontWeight: 'bold',
-    marginBottom: 20,
-    color: '#f4511e',
+    fontWeight: '700',
+    color: '#f4511e', // Turuncu vurgu
+    marginBottom: 25,
   },
-  manualAgeGroup: {
+  // Bölüm kapsayıcı
+  sectionContainer: {
+    marginBottom: 20,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#f4511e',
+    marginBottom: 10,
+  },
+  // Yaş girişi
+  ageInputRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom: 20,
   },
   ageInput: {
     flex: 1,
     height: 50,
+    backgroundColor: '#fff',
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
     paddingHorizontal: 15,
     marginHorizontal: 5,
-    backgroundColor: '#fff',
+    fontSize: 16,
+    color: '#333',
   },
+  // Kılavuz butonları
+  guideButtonRow: {
+    flexWrap: 'wrap',
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  guideButton: {
+    backgroundColor: '#fff',
+    borderColor: '#ddd',
+    borderWidth: 1,
+    borderRadius: 10,
+    margin: 5,
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    elevation: 2, // Hafif gölge
+  },
+  guideButtonSelected: {
+    backgroundColor: '#f4511e',
+    borderColor: '#f4511e',
+  },
+  guideButtonText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  guideButtonTextSelected: {
+    color: '#fff',
+  },
+  // Değer girişi
   inputGroup: {
     marginBottom: 15,
   },
   inputLabel: {
     fontSize: 16,
     marginBottom: 5,
+    color: '#333',
   },
-  input: {
+  valueInput: {
     height: 50,
+    backgroundColor: '#fff',
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#ddd',
-    borderRadius: 8,
     paddingHorizontal: 15,
-    backgroundColor: '#fff',
+    fontSize: 16,
+    color: '#333',
   },
-  buttonGroup: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    flexWrap: 'wrap',
-    marginBottom: 20,
-  },
-  button: {
-    padding: 10,
-    backgroundColor: '#ddd',
-    borderRadius: 8,
-    margin: 5,
-  },
-  selectedButton: {
-    padding: 10,
-    backgroundColor: '#6200ee',
-    borderRadius: 8,
-    margin: 5,
-  },
-  buttonText: {
-    color: '#fff',
-  },
+  // Hesapla butonu
   calculateButton: {
-    backgroundColor: '#6200ee',
+    backgroundColor: '#f4511e',
     padding: 15,
-    borderRadius: 8,
+    borderRadius: 10,
     alignItems: 'center',
+    elevation: 2,
     marginBottom: 20,
   },
   calculateButtonText: {
@@ -266,22 +326,37 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
   },
+  // Sonuçlar
+  resultsContainer: {
+    backgroundColor: '#fff',
+    borderRadius: 10,
+    padding: 15,
+    borderWidth: 1,
+    borderColor: '#ddd',
+  },
   resultsTitle: {
-    fontSize: 20,
-    fontWeight: 'bold',
+    fontSize: 18,
+    fontWeight: '600',
+    color: '#f4511e',
     marginBottom: 10,
+    textAlign: 'center',
   },
   resultItem: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginVertical: 8,
   },
-  resultIcon: {
-    marginRight: 10,
+  resultItemLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   resultText: {
     fontSize: 16,
+    color: '#333',
+  },
+  resultStatus: {
+    fontSize: 16,
+    fontWeight: '600',
   },
 });
-
-export default GuideScreen;
