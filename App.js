@@ -89,7 +89,7 @@ export default function App() {
             name="PrescriptionEntry"
             component={PrescriptionEntry}
             options={{
-              title: 'Reçete Oluştur',
+              title: 'Tahlil Oluştur',
               headerStyle: {
                 backgroundColor: '#f4511e',
               },
